@@ -23,6 +23,8 @@ class Persister:
     def load_state(self):
         '''
         读取策略状态.
+        
+        首次创建策略读取无法成功的,报错.
         '''
         pass
     
@@ -42,6 +44,10 @@ class GuosenPersister(Persister):
         position = get_data(SQL_LOAD_POSITION.format(strategy_name = self.strategy_name),
                             'xiaoyi')
 
+        # 首次运行策略
+        if len(position) == 0:
+            raise ValueError('New Strategy')
+            
         position_dict = {}
         for idx,row in position.iterrows():
             fund_code = row['fund_code']
@@ -102,7 +108,7 @@ class GuosenPersister(Persister):
         execute_session(SQL_MERGE_REBALANCE,'xiaoyi')
         
         # refresh
-        refresh_state_df = pd.DataFrame([[strategy_name,refresh_rate,refresh_counter,dt.datetime.date().strftime('%Y%m%d')]],
+        refresh_state_df = pd.DataFrame([[strategy_name,refresh_rate,refresh_counter,dt.datetime.today().strftime('%Y%m%d')]],
                                           columns = ['strategy_name','refresh_rate','refresh_counter','update_date'])
         save_into_db(refresh_state_df,'FOF_refresh_state_source',{'strategy_name':VARCHAR(32),
                                                            'refresh_rate':INT,
